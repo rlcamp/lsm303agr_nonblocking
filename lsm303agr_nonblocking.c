@@ -21,27 +21,16 @@ int lsm303agr_oneshot(struct lsm303agr_result * result, struct lsm303agr_state *
         }
     }
 
-    else if (2 == state->state) {
-        /* reboot */
-        int ret = i2c_write_one_byte(&state->i2c_state, 1U << 5, 0x1e, 0x60);
-        if (ret) {
-            if (-1 == ret) state->state = 0;
-            return 1;
-        }
-    }
+    else if (state->state < 5) {
+        /* table of i2c register writes versus state index */
+        static const struct config_write { uint8_t val, reg, address; } writes[] = {
+          { .val = 1U << 5, .reg = 0x1e, .address = 0x60 }, /* reboot magnetometer */
+          { .val = 1U << 6, .reg = 0x1e, .address = 0x60 }, /* reset magnetometer */
+          { .val = 1U << 4, .reg = 0x1e, .address = 0x62 }, /* configure bdu for magnetometer */
+        };
+        const struct config_write * write = writes + state->state - 1;
 
-    else if (3 == state->state) {
-        /* reset */
-        int ret = i2c_write_one_byte(&state->i2c_state, 1U << 6, 0x1e, 0x60);
-        if (ret) {
-            if (-1 == ret) state->state = 0;
-            return 1;
-        }
-    }
-
-    else if (4 == state->state) {
-        /* enable bdu */
-        int ret = i2c_write_one_byte(&state->i2c_state, 1U << 4, 0x1e, 0x62);
+        int ret = i2c_write_one_byte(&state->i2c_state, write->val, write->reg, write->address);
         if (ret) {
             if (-1 == ret) state->state = 0;
             return 1;

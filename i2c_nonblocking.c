@@ -3,14 +3,14 @@
 #include "i2c_nonblocking.h"
 #include <samd.h>
 
-#ifdef SERCOM
+#ifdef SERCOM_I2C
 /* allow compiler invocation to override these macros */
 #elif defined(ADAFRUIT_FEATHER_M0)
 /* tested */
-#define SERCOM SERCOM3
-#define SERCOM_GCLK_ID_CORE SERCOM3_GCLK_ID_CORE
-#define SERCOM_IRQn SERCOM3_IRQn
-#define SERCOM_HANDLER SERCOM3_Handler
+#define SERCOM_I2C SERCOM3
+#define SERCOM_I2C_GCLK_ID_CORE SERCOM3_GCLK_ID_CORE
+#define SERCOM_I2C_IRQn SERCOM3_IRQn
+#define SERCOM_I2C_HANDLER SERCOM3_Handler
 #define SCL_PORT_AND_PIN 0, 23
 #define SCL_PINMUX_FUNC 2
 #define SDA_PORT_AND_PIN 0, 22
@@ -18,10 +18,10 @@
 
 #elif defined(ARDUINO_QTPY_M0)
 /* tested */
-#define SERCOM SERCOM1
-#define SERCOM_GCLK_ID_CORE SERCOM1_GCLK_ID_CORE
-#define SERCOM_IRQn SERCOM1_IRQn
-#define SERCOM_HANDLER SERCOM1_Handler
+#define SERCOM_I2C SERCOM1
+#define SERCOM_I2C_GCLK_ID_CORE SERCOM1_GCLK_ID_CORE
+#define SERCOM_I2C_IRQn SERCOM1_IRQn
+#define SERCOM_I2C_HANDLER SERCOM1_Handler
 #define SCL_PORT_AND_PIN 0, 17
 #define SCL_PINMUX_FUNC 2
 #define SDA_PORT_AND_PIN 0, 16
@@ -29,10 +29,10 @@
 
 #elif defined(ARDUINO_TRINKET_M0)
 /* TODO: NOT tested. SHOULD work with trinket silkscreen pins 0 and 2 for sda and scl */
-#define SERCOM SERCOM2
-#define SERCOM_GCLK_ID_CORE SERCOM2_GCLK_ID_CORE
-#define SERCOM_IRQn SERCOM2_IRQn
-#define SERCOM_HANDLER SERCOM2_Handler
+#define SERCOM_I2C SERCOM2
+#define SERCOM_I2C_GCLK_ID_CORE SERCOM2_GCLK_ID_CORE
+#define SERCOM_I2C_IRQn SERCOM2_IRQn
+#define SERCOM_I2C_HANDLER SERCOM2_Handler
 #define SCL_PORT_AND_PIN 0, 9
 #define SCL_PINMUX_FUNC 3
 #define SDA_PORT_AND_PIN 0, 8
@@ -40,10 +40,10 @@
 
 #elif defined(ADAFRUIT_FEATHER_M4_EXPRESS)
 /* tested */
-#define SERCOM SERCOM2
-#define SERCOM_GCLK_ID_CORE SERCOM2_GCLK_ID_CORE
-#define SERCOM_IRQn SERCOM2_0_IRQn
-#define SERCOM_HANDLER SERCOM2_0_Handler
+#define SERCOM_I2C SERCOM2
+#define SERCOM_I2C_GCLK_ID_CORE SERCOM2_GCLK_ID_CORE
+#define SERCOM_I2C_IRQn SERCOM2_0_IRQn
+#define SERCOM_I2C_HANDLER SERCOM2_0_Handler
 #define SCL_PORT_AND_PIN 0, 13
 #define SCL_PINMUX_FUNC 2
 #define SDA_PORT_AND_PIN 0, 12
@@ -67,8 +67,8 @@ static void pin_set(const unsigned port, const unsigned pin, const unsigned valu
 int i2c_init(struct i2c_state * state, unsigned long now) {
     if (0 == state->state) {
         /* disable the sercom prior to bitbanging */
-        SERCOM->I2CM.CTRLA.bit.ENABLE = 0;
-        while (SERCOM->I2CM.SYNCBUSY.bit.ENABLE);
+        SERCOM_I2C->I2CM.CTRLA.bit.ENABLE = 0;
+        while (SERCOM_I2C->I2CM.SYNCBUSY.bit.ENABLE);
 
         pin_set(SCL_PORT_AND_PIN, 1);
     }
@@ -92,42 +92,42 @@ int i2c_init(struct i2c_state * state, unsigned long now) {
         pinmux(SCL_PORT_AND_PIN, SCL_PINMUX_FUNC);
 
         /* set up interrupt */
-        NVIC_ClearPendingIRQ(SERCOM_IRQn);
-        NVIC_SetPriority(SERCOM_IRQn, (1 << __NVIC_PRIO_BITS) - 1);
-        NVIC_EnableIRQ(SERCOM_IRQn);
+        NVIC_ClearPendingIRQ(SERCOM_I2C_IRQn);
+        NVIC_SetPriority(SERCOM_I2C_IRQn, (1 << __NVIC_PRIO_BITS) - 1);
+        NVIC_EnableIRQ(SERCOM_I2C_IRQn);
 
 #ifdef __SAMD51__
-        GCLK->PCHCTRL[SERCOM_GCLK_ID_CORE].bit.CHEN = 0;
-        while (GCLK->PCHCTRL[SERCOM_GCLK_ID_CORE].bit.CHEN);
+        GCLK->PCHCTRL[SERCOM_I2C_GCLK_ID_CORE].bit.CHEN = 0;
+        while (GCLK->PCHCTRL[SERCOM_I2C_GCLK_ID_CORE].bit.CHEN);
 
-        GCLK->PCHCTRL[SERCOM_GCLK_ID_CORE].reg = GCLK_PCHCTRL_GEN_GCLK1_Val | (1 << GCLK_PCHCTRL_CHEN_Pos);
-        while (!GCLK->PCHCTRL[SERCOM_GCLK_ID_CORE].bit.CHEN);
+        GCLK->PCHCTRL[SERCOM_I2C_GCLK_ID_CORE].reg = GCLK_PCHCTRL_GEN_GCLK1_Val | (1 << GCLK_PCHCTRL_CHEN_Pos);
+        while (!GCLK->PCHCTRL[SERCOM_I2C_GCLK_ID_CORE].bit.CHEN);
 #else
         /* set up clock */
-        GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID(SERCOM_GCLK_ID_CORE) | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_CLKEN;
+        GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID(SERCOM_I2C_GCLK_ID_CORE) | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_CLKEN;
         while (GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY);
 #endif
 
         /* reset the sercom */
-        SERCOM->I2CM.CTRLA.bit.SWRST = 1;
-        while (SERCOM->I2CM.CTRLA.bit.SWRST || SERCOM->I2CM.SYNCBUSY.bit.SWRST);
+        SERCOM_I2C->I2CM.CTRLA.bit.SWRST = 1;
+        while (SERCOM_I2C->I2CM.CTRLA.bit.SWRST || SERCOM_I2C->I2CM.SYNCBUSY.bit.SWRST);
 
         /* TODO: figure out what else is needed for i2c in standby on samd21, works fine on samd51 */
-        SERCOM->I2CM.CTRLA.reg = SERCOM_I2CM_CTRLA_MODE(0x5u) | SERCOM_I2CM_CTRLA_RUNSTDBY | SERCOM_I2CM_CTRLA_LOWTOUTEN | SERCOM_I2CM_CTRLA_SEXTTOEN | SERCOM_I2CM_CTRLA_MEXTTOEN | SERCOM_I2CM_CTRLA_INACTOUT(2);
+        SERCOM_I2C->I2CM.CTRLA.reg = SERCOM_I2CM_CTRLA_MODE(0x5u) | SERCOM_I2CM_CTRLA_RUNSTDBY | SERCOM_I2CM_CTRLA_LOWTOUTEN | SERCOM_I2CM_CTRLA_SEXTTOEN | SERCOM_I2CM_CTRLA_MEXTTOEN | SERCOM_I2CM_CTRLA_INACTOUT(2);
 
         /* assume system/peripheral clock is 48 MHz */
         const unsigned long sysclock = 48000000UL, baudrate = 100000UL;
 
         /* this is inexact for samd21 but not by enough to stress about it */
-        SERCOM->I2CM.BAUD.bit.BAUD = sysclock / (2 * baudrate) - 1;
+        SERCOM_I2C->I2CM.BAUD.bit.BAUD = sysclock / (2 * baudrate) - 1;
 
         /* re-enable the sercom */
-        SERCOM->I2CM.CTRLA.bit.ENABLE = 1;
-        while (SERCOM->I2CM.SYNCBUSY.bit.ENABLE);
+        SERCOM_I2C->I2CM.CTRLA.bit.ENABLE = 1;
+        while (SERCOM_I2C->I2CM.SYNCBUSY.bit.ENABLE);
 
         /* set the bus state to idle */
-        SERCOM->I2CM.STATUS.bit.BUSSTATE = 1;
-        while (SERCOM->I2CM.SYNCBUSY.bit.SYSOP);
+        SERCOM_I2C->I2CM.STATUS.bit.BUSSTATE = 1;
+        while (SERCOM_I2C->I2CM.SYNCBUSY.bit.SYSOP);
 
         /* reached upon completing the last state */
         state->state = 0;
@@ -137,12 +137,12 @@ int i2c_init(struct i2c_state * state, unsigned long now) {
 
 static int wait_for_mb_or_error(void) {
     /* if ack has not arrived... */
-    if (!SERCOM->I2CM.INTFLAG.bit.MB) {
+    if (!SERCOM_I2C->I2CM.INTFLAG.bit.MB) {
         /* check for bus error */
-        if (SERCOM->I2CM.STATUS.bit.BUSERR) {
+        if (SERCOM_I2C->I2CM.STATUS.bit.BUSERR) {
             /* send stop command and wait for sync */
-            SERCOM->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_CMD(0x3);
-            while (SERCOM->I2CM.SYNCBUSY.bit.SYSOP);
+            SERCOM_I2C->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_CMD(0x3);
+            while (SERCOM_I2C->I2CM.SYNCBUSY.bit.SYSOP);
 
             /* parent should react to to this by resetting its state */
             return -1;
@@ -160,10 +160,10 @@ int i2c_write_one_byte(struct i2c_state * state, uint8_t byte, uint8_t addr, uin
     /* TODO: return -1 due to a number of possible error states */
     if (0 == state->state) {
         /* wait until bus state is idle or owner */
-        if (SERCOM->I2CM.STATUS.bit.BUSSTATE != 1 && SERCOM->I2CM.STATUS.bit.BUSSTATE != 2) return 1;
+        if (SERCOM_I2C->I2CM.STATUS.bit.BUSSTATE != 1 && SERCOM_I2C->I2CM.STATUS.bit.BUSSTATE != 2) return 1;
 
         /* write address and wait for acknowledgment */
-        SERCOM->I2CM.ADDR.bit.ADDR = addr << 1 | 0;
+        SERCOM_I2C->I2CM.ADDR.bit.ADDR = addr << 1 | 0;
     }
 
     else if (1 == state->state) {
@@ -171,7 +171,7 @@ int i2c_write_one_byte(struct i2c_state * state, uint8_t byte, uint8_t addr, uin
         if (ret) return ret;
 
         /* write register and wait for acknowledgment */
-        SERCOM->I2CM.DATA.bit.DATA = reg;
+        SERCOM_I2C->I2CM.DATA.bit.DATA = reg;
     }
 
     else if (2 == state->state) {
@@ -179,7 +179,7 @@ int i2c_write_one_byte(struct i2c_state * state, uint8_t byte, uint8_t addr, uin
         if (ret) return ret;
 
         /* write data byte and wait for acknowledgment */
-        SERCOM->I2CM.DATA.bit.DATA = byte;
+        SERCOM_I2C->I2CM.DATA.bit.DATA = byte;
     }
 
     if (state->state < 3) {
@@ -192,8 +192,8 @@ int i2c_write_one_byte(struct i2c_state * state, uint8_t byte, uint8_t addr, uin
         if (ret) return ret;
 
         /* send stop command and wait for sync */
-        SERCOM->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_CMD(0x3);
-        while (SERCOM->I2CM.SYNCBUSY.bit.SYSOP);
+        SERCOM_I2C->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_CMD(0x3);
+        while (SERCOM_I2C->I2CM.SYNCBUSY.bit.SYSOP);
 
         /* reached upon completing the last state */
         state->state = 0;
@@ -206,9 +206,9 @@ int i2c_read_from_register(struct i2c_state * state, void * outv, size_t count, 
     unsigned char * out = (unsigned char *)outv;
 
     if (0 == state->state) {
-        if (SERCOM->I2CM.STATUS.bit.BUSSTATE != 1 && SERCOM->I2CM.STATUS.bit.BUSSTATE != 2) return 1;
+        if (SERCOM_I2C->I2CM.STATUS.bit.BUSSTATE != 1 && SERCOM_I2C->I2CM.STATUS.bit.BUSSTATE != 2) return 1;
         /* write i2c device address and wait for ack */
-        SERCOM->I2CM.ADDR.bit.ADDR = addr << 1 | 0;
+        SERCOM_I2C->I2CM.ADDR.bit.ADDR = addr << 1 | 0;
     }
 
     else if (1 == state->state) {
@@ -216,7 +216,7 @@ int i2c_read_from_register(struct i2c_state * state, void * outv, size_t count, 
         if (ret) return ret;
 
         /* write register address and wait for ack */
-        SERCOM->I2CM.DATA.bit.DATA = reg;
+        SERCOM_I2C->I2CM.DATA.bit.DATA = reg;
     }
 
     else if (2 == state->state) {
@@ -224,16 +224,16 @@ int i2c_read_from_register(struct i2c_state * state, void * outv, size_t count, 
         if (ret) return ret;
 
         /* write address again with LSB set, which also sends a repeated-start condition*/
-        SERCOM->I2CM.ADDR.bit.ADDR = addr << 1 | 1;
+        SERCOM_I2C->I2CM.ADDR.bit.ADDR = addr << 1 | 1;
     }
 
     else if (state->state >= 3 && state->state < 3 + count) {
         /* wait for the next byte and read it */
-        if (!SERCOM->I2CM.INTFLAG.bit.SB) {
+        if (!SERCOM_I2C->I2CM.INTFLAG.bit.SB) {
             /* if other end has unexpectedly NACKed the address... */
-            if (SERCOM->I2CM.INTFLAG.bit.MB) {
-                SERCOM->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_CMD(0x3);
-                while (SERCOM->I2CM.SYNCBUSY.bit.SYSOP);
+            if (SERCOM_I2C->I2CM.INTFLAG.bit.MB) {
+                SERCOM_I2C->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_CMD(0x3);
+                while (SERCOM_I2C->I2CM.SYNCBUSY.bit.SYSOP);
 
                 /* parent should react to to this by resetting its state */
                 return -1;
@@ -244,18 +244,18 @@ int i2c_read_from_register(struct i2c_state * state, void * outv, size_t count, 
         }
 
         const size_t ibyte = state->state - 3;
-        out[ibyte] = SERCOM->I2CM.DATA.bit.DATA;
+        out[ibyte] = SERCOM_I2C->I2CM.DATA.bit.DATA;
 
         if (ibyte + 1 == count) {
             /* nack the byte we just received, and send a stop condition */
-            SERCOM->I2CM.CTRLB.bit.ACKACT = 1;
-            SERCOM->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_CMD(0x3);
+            SERCOM_I2C->I2CM.CTRLB.bit.ACKACT = 1;
+            SERCOM_I2C->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_CMD(0x3);
         } else {
             /* ack the byte we just received, and send a read condition */
-            SERCOM->I2CM.CTRLB.bit.ACKACT = 0;
-            SERCOM->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_CMD(0x2);
+            SERCOM_I2C->I2CM.CTRLB.bit.ACKACT = 0;
+            SERCOM_I2C->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_CMD(0x2);
         }
-        while (SERCOM->I2CM.SYNCBUSY.bit.SYSOP);
+        while (SERCOM_I2C->I2CM.SYNCBUSY.bit.SYSOP);
     }
 
     if (state->state < 3 + count) {

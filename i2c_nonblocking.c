@@ -63,8 +63,13 @@ static void pin_set(const unsigned port, const unsigned pin, const unsigned valu
 }
 
 int i2c_init(struct i2c_state * state, unsigned long now) {
-    if (0 == state->state)
+    if (0 == state->state) {
+        /* disable the sercom */
+        SERCOM->I2CM.CTRLA.bit.ENABLE = 0;
+        while (SERCOM->I2CM.SYNCBUSY.bit.ENABLE);
+
         pin_set(SCL_PORT_AND_PIN, 1);
+    }
     
     if (state->state <= 18) {
         if (now - state->prev < 20) return 1;

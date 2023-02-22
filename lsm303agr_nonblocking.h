@@ -11,7 +11,7 @@ struct lsm303agr_state {
     unsigned long prev;
     struct i2c_state i2c_state;
 
-    uint8_t status_and_results[7];
+    uint8_t buffer[7];
 };
 
 /* this should be passed a zero-initialized instance of the above struct, and should call the

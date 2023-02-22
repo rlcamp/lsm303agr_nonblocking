@@ -74,16 +74,16 @@ int lsm303agr_oneshot(int16_t values[3], struct lsm303agr_state * state, unsigne
         return 1;
     } else {
         /* final state */
-        int ret = i2c_read_from_register(&state->i2c_state, state->status_and_results, 7, 0x1e, 0x67 | 0x80);
+        int ret = i2c_read_from_register(&state->i2c_state, state->buffer, 7, 0x1e, 0x67 | 0x80);
         if (ret) {
             if (-1 == ret) state->state = 0;
             return 1;
         }
 
-        if (state->status_and_results[0] & 0x0F) {
-            memcpy(values + 0, state->status_and_results + 1, 2);
-            memcpy(values + 1, state->status_and_results + 3, 2);
-            memcpy(values + 2, state->status_and_results + 5, 2);
+        if (state->buffer[0] & 0x0F) {
+            memcpy(values + 0, state->buffer + 1, 2);
+            memcpy(values + 1, state->buffer + 3, 2);
+            memcpy(values + 2, state->buffer + 5, 2);
         }
         else
             memset(values, 0, sizeof(int16_t[3]));

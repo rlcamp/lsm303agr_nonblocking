@@ -1,3 +1,5 @@
+/* campbell, 2023, isc license to the extent applicable */
+
 #include "lsm303agr_nonblocking.h"
 #include <string.h>
 

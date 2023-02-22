@@ -1,3 +1,5 @@
+/* campbell, 2023, isc license to the extent applicable */
+
 #include "i2c_nonblocking.h"
 
 #ifdef __cplusplus

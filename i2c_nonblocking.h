@@ -1,3 +1,5 @@
+/* campbell, 2023, isc license to the extent applicable */
+
 #include <stdint.h>
 #include <stddef.h>
 

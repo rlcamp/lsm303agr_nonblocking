@@ -199,7 +199,19 @@ int i2c_read_from_register(struct i2c_state * state, void * outv, size_t count, 
 
     else if (state->state >= 3 && state->state < 3 + count) {
         /* wait for the next byte and read it */
-        if (!SERCOM->I2CM.INTFLAG.bit.SB) return 1;
+        if (!SERCOM->I2CM.INTFLAG.bit.SB) {
+            /* if other end has unexpectedly NACKed the address... */
+            if (SERCOM->I2CM.INTFLAG.bit.MB) {
+                SERCOM->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_CMD(0x3);
+                while (SERCOM->I2CM.SYNCBUSY.bit.SYSOP);
+
+                /* parent should react to to this by resetting its state */
+                return -1;
+            }
+
+            /* otherwise we are still just waiting for the ACK */
+            return 1;
+        }
 
         const size_t ibyte = state->state - 3;
         out[ibyte] = SERCOM->I2CM.DATA.bit.DATA;

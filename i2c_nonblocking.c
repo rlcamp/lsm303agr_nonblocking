@@ -74,7 +74,7 @@ int i2c_init(struct i2c_state * state, unsigned long now) {
     }
     
     if (state->state <= 18) {
-        /* clock out nine bits of whatever leftover state the other end may have been in the middle of sending */
+        /* clock out nine bits of whatever leftover state the other end may have been sending */
         if (now - state->prev < 20) return 1;
         pin_set(SCL_PORT_AND_PIN, !(state->state % 2)); /* lower pin in odd state, raise in even */
     }
@@ -87,7 +87,7 @@ int i2c_init(struct i2c_state * state, unsigned long now) {
     } else {
         /* final state */
 
-        /* set up pinmux using a board-specific macro for all arguments */
+        /* set up pinmux using board-specific macros */
         pinmux(SDA_PORT_AND_PIN, SDA_PINMUX_FUNC);
         pinmux(SCL_PORT_AND_PIN, SCL_PINMUX_FUNC);
 
@@ -136,7 +136,9 @@ int i2c_init(struct i2c_state * state, unsigned long now) {
 }
 
 static int wait_for_mb_or_error(void) {
+    /* if ack has not arrived... */
     if (!SERCOM->I2CM.INTFLAG.bit.MB) {
+        /* check for bus error */
         if (SERCOM->I2CM.STATUS.bit.BUSERR) {
             /* send stop command and wait for sync */
             SERCOM->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_CMD(0x3);
@@ -145,6 +147,8 @@ static int wait_for_mb_or_error(void) {
             /* parent should react to to this by resetting its state */
             return -1;
         }
+
+        /* TODO: check for other possible error states? */
 
         /* otherwise we are still just waiting for ack */
         else return 1;

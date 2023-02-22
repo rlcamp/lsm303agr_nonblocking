@@ -3,41 +3,49 @@
 
 int lsm303agr_oneshot(int16_t values[3], struct lsm303agr_state * state, unsigned long now) {
     if (0 == state->state) {
+        /* reinitialize the i2c state, in case we are here because of an abnormal condition */
+        state->i2c_state = (struct i2c_state) { 0 };
+
+        /* proceed immediately to next state */
+        state->state++;
+    }
+
+    if (1 == state->state) {
         /* init i2c bus */
         if (i2c_init(&state->i2c_state, now)) return 1;
     }
 
-    else if (1 == state->state) {
+    else if (2 == state->state) {
         /* reboot */
         if (i2c_write_one_byte(&state->i2c_state, 1U << 5, 0x1e, 0x60)) return 1;
     }
 
-    else if (2 == state->state) {
+    else if (3 == state->state) {
         /* reset */
         if (i2c_write_one_byte(&state->i2c_state, 1U << 6, 0x1e, 0x60)) return 1;
     }
 
-    else if (3 == state->state) {
+    else if (4 == state->state) {
         /* enable bdu */
         if (i2c_write_one_byte(&state->i2c_state, 1U << 4, 0x1e, 0x62)) return 1;
     }
 
-    else if (4 == state->state) {
+    else if (5 == state->state) {
         /* wait ten more milliseconds */
         if (now - state->prev < 10) return 1;
     }
 
-    else if (5 == state->state) {
+    else if (6 == state->state) {
         /* initiate a oneshot transaction */
         if (i2c_write_one_byte(&state->i2c_state, 1U << 7 | 1, 0x1e, 0x60)) return 1;
     }
 
-    else if (6 == state->state) {
+    else if (7 == state->state) {
         /* wait ten milliseconds */
         if (now - state->prev < 10) return 1;
     }
 
-    if (state->state < 7) {
+    if (state->state < 8) {
         /* completed any state other than the final one */
         state->state++;
         state->prev = now;
@@ -54,11 +62,8 @@ int lsm303agr_oneshot(int16_t values[3], struct lsm303agr_state * state, unsigne
         else
             memset(values, 0, sizeof(int16_t[3]));
 
-        /* reached end of final state */
-        state->i2c_state.state = 0;
-
         /* note the next valid state is the beginning of a new oneshot transaction */
-        state->state = 5;
+        state->state = 6;
         return 0;
     }
 }

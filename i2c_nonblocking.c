@@ -116,12 +116,8 @@ int i2c_init(struct i2c_state * state, unsigned long now) {
         /* assume system/peripheral clock is 48 MHz */
         const unsigned long sysclock = 48000000UL, baudrate = 100000UL;
 
-#ifdef __SAMD51__
+        /* this is inexact for samd21 but not by enough to stress about it */
         SERCOM->I2CM.BAUD.bit.BAUD = sysclock / (2 * baudrate) - 1;
-#else
-        /* samd21 cargo cult rise time stuff */
-        SERCOM->I2CM.BAUD.bit.BAUD = sysclock / (2 * baudrate) - 5 - (((sysclock / 1000000) * 125) / (2 * 1000));
-#endif
 
         /* re-enable the sercom */
         SERCOM->I2CM.CTRLA.bit.ENABLE = 1;

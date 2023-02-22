@@ -64,7 +64,7 @@ static void pin_set(const unsigned port, const unsigned pin, const unsigned valu
 
 int i2c_init(struct i2c_state * state, unsigned long now) {
     if (0 == state->state) {
-        /* disable the sercom */
+        /* disable the sercom prior to bitbanging */
         SERCOM->I2CM.CTRLA.bit.ENABLE = 0;
         while (SERCOM->I2CM.SYNCBUSY.bit.ENABLE);
 
@@ -72,6 +72,7 @@ int i2c_init(struct i2c_state * state, unsigned long now) {
     }
     
     if (state->state <= 18) {
+        /* clock out nine bits of whatever leftover state the other end may have been in the middle of sending */
         if (now - state->prev < 20) return 1;
         pin_set(SCL_PORT_AND_PIN, !(state->state % 2)); /* lower pin in odd state, raise in even */
     }
@@ -116,13 +117,13 @@ int i2c_init(struct i2c_state * state, unsigned long now) {
         const unsigned long sysclock = 48000000UL, baudrate = 100000UL;
 
 #ifdef __SAMD51__
-        SERCOM->I2CM.BAUD.bit.BAUD = sysclock / ( 2 * baudrate) - 1;
+        SERCOM->I2CM.BAUD.bit.BAUD = sysclock / (2 * baudrate) - 1;
 #else
         /* samd21 cargo cult rise time stuff */
         SERCOM->I2CM.BAUD.bit.BAUD = sysclock / (2 * baudrate) - 5 - (((sysclock / 1000000) * 125) / (2 * 1000));
 #endif
 
-        /* enable the sercom */
+        /* re-enable the sercom */
         SERCOM->I2CM.CTRLA.bit.ENABLE = 1;
         while (SERCOM->I2CM.SYNCBUSY.bit.ENABLE);
 

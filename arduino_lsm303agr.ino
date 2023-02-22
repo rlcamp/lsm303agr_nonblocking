@@ -21,31 +21,31 @@ void loop() {
     const unsigned long now = millis();
 
     if (0 == state) {
-        int16_t values[3];
-        if (lsm303agr_oneshot(values, &lsm303agr_state, now)) return;
+        struct lsm303agr_result result;
+        if (lsm303agr_oneshot(&result, &lsm303agr_state, now)) return;
 
-        if (values[0] || values[1] || values[2]) {
+        if (result.mag[0] || result.mag[1] || result.mag[2]) {
             /* do some stupid, fragile auto calibration stuff */
             static int16_t x_min = INT16_MAX, x_max = INT16_MIN;
             static int16_t y_min = INT16_MAX, y_max = INT16_MIN;
             static int16_t z_min = INT16_MAX, z_max = INT16_MIN;
 
-            if (values[0] < x_min) x_min = values[0];
-            if (values[0] > x_max) x_max = values[0];
-            if (values[1] < y_min) y_min = values[1];
-            if (values[1] > y_max) y_max = values[1];
-            if (values[2] < z_min) z_min = values[2];
-            if (values[2] > z_max) z_max = values[2];
+            if (result.mag[0] < x_min) x_min = result.mag[0];
+            if (result.mag[0] > x_max) x_max = result.mag[0];
+            if (result.mag[1] < y_min) y_min = result.mag[1];
+            if (result.mag[1] > y_max) y_max = result.mag[1];
+            if (result.mag[2] < z_min) z_min = result.mag[2];
+            if (result.mag[2] > z_max) z_max = result.mag[2];
 
-            const int x_calibrated = values[0] - (x_min + x_max + 1) / 2;
-            const int y_calibrated = values[1] - (y_min + y_max + 1) / 2;
+            const int x_calibrated = result.mag[0] - (x_min + x_max + 1) / 2;
+            const int y_calibrated = result.mag[1] - (y_min + y_max + 1) / 2;
 
             /* this value will be bs until the sensor has been turned in a circle */
             const float heading = atan2f(y_calibrated, x_calibrated) * 180.0 / M_PI;
 
             Serial.printf("values: %d %d %d: heading %dd, strength %d\n",
-                          values[0], values[1], values[2], (int)(heading),
-                          (int)sqrtf(values[0] * values[0] + values[1] * values[1] + values[2] * values[2]));
+                          result.mag[0], result.mag[1], result.mag[2], (int)(heading),
+                          (int)sqrtf(result.mag[0] * result.mag[0] + result.mag[1] * result.mag[1] + result.mag[2] * result.mag[2]));
         }
         else Serial.printf("no values yet\n");
 

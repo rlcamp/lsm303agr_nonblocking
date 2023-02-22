@@ -3,7 +3,7 @@
 #include "lsm303agr_nonblocking.h"
 #include <string.h>
 
-int lsm303agr_oneshot(int16_t values[3], struct lsm303agr_state * state, unsigned long now) {
+int lsm303agr_oneshot(struct lsm303agr_result * result, struct lsm303agr_state * state, unsigned long now) {
     if (0 == state->state) {
         /* reinitialize the i2c state, in case we are here because of an abnormal condition */
         state->i2c_state = (struct i2c_state) { 0 };
@@ -81,12 +81,12 @@ int lsm303agr_oneshot(int16_t values[3], struct lsm303agr_state * state, unsigne
         }
 
         if (state->buffer[0] & 0x0F) {
-            memcpy(values + 0, state->buffer + 1, 2);
-            memcpy(values + 1, state->buffer + 3, 2);
-            memcpy(values + 2, state->buffer + 5, 2);
+            memcpy(result->mag + 0, state->buffer + 1, 2);
+            memcpy(result->mag + 1, state->buffer + 3, 2);
+            memcpy(result->mag + 2, state->buffer + 5, 2);
         }
         else
-            memset(values, 0, sizeof(int16_t[3]));
+            memset(result->mag, 0, sizeof(int16_t[3]));
 
         /* note the next valid state is the beginning of a new oneshot transaction */
         state->state = 6;

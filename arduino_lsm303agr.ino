@@ -43,7 +43,8 @@ void loop() {
             /* this value will be bs until the sensor has been turned in a circle */
             const float heading = atan2f(y_calibrated, x_calibrated) * 180.0 / M_PI;
 
-            Serial.printf("values: %d %d %d: heading %dd, strength %d\n",
+            Serial.printf("accel: %d %d %d\n", result.accel[0], result.accel[1], result.accel[2]);
+            Serial.printf("mag: %d %d %d: heading %dd, strength %d\n",
                           result.mag[0], result.mag[1], result.mag[2], (int)(heading),
                           (int)sqrtf(result.mag[0] * result.mag[0] + result.mag[1] * result.mag[1] + result.mag[2] * result.mag[2]));
         }

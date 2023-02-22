@@ -11,12 +11,12 @@ struct lsm303agr_state {
     unsigned long prev;
     struct i2c_state i2c_state;
 
+    int16_t accel[3];
     uint8_t buffer[7];
 };
 
 struct lsm303agr_result {
-//    uint16_t temperature;
-//    int16_t accel[3];
+    int16_t accel[3];
     int16_t mag[3];
 };
 

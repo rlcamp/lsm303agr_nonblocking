@@ -137,6 +137,7 @@ int i2c_init(struct i2c_state * state, unsigned long now) {
 }
 
 int i2c_write_one_byte(struct i2c_state * state, uint8_t byte, uint8_t addr, uint8_t reg) {
+    /* TODO: return -1 due to a number of possible error states */
     if (0 == state->state) {
         /* wait until bus state is idle or owner */
         if (SERCOM->I2CM.STATUS.bit.BUSSTATE != 1 && SERCOM->I2CM.STATUS.bit.BUSSTATE != 2) return 1;
@@ -175,6 +176,7 @@ int i2c_write_one_byte(struct i2c_state * state, uint8_t byte, uint8_t addr, uin
 }
 
 int i2c_read_from_register(struct i2c_state * state, void * outv, size_t count, uint8_t addr, uint8_t reg) {
+    /* TODO: return -1 due to a number of possible error states */
     unsigned char * out = (unsigned char *)outv;
 
     if (0 == state->state) {

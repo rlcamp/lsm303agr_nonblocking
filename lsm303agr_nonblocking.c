@@ -1,7 +1,7 @@
 #include "lsm303agr_nonblocking.h"
 #include <string.h>
 
-int lsm303agr_init(struct lsm303agr_state * state, unsigned long now) {
+int lsm303agr_oneshot(int16_t values[3], struct lsm303agr_state * state, unsigned long now) {
     if (0 == state->state) {
         /* init i2c bus */
         if (i2c_init(&state->i2c_state, now)) return 1;
@@ -22,34 +22,22 @@ int lsm303agr_init(struct lsm303agr_state * state, unsigned long now) {
         if (i2c_write_one_byte(&state->i2c_state, 1U << 4, 0x1e, 0x62)) return 1;
     }
 
-    if (state->state < 4) {
-        /* completed any state other than the final one */
-        state->state++;
-        state->prev = now;
-        return 1;
-    } else {
-        /* final state */
-
+    else if (4 == state->state) {
         /* wait ten more milliseconds */
         if (now - state->prev < 10) return 1;
-
-        state->i2c_state.state = 0;
-        state->state = 0;
-        return 0;
     }
-}
 
-int lsm303agr_oneshot(int16_t values[3], struct lsm303agr_state * state, unsigned long now) {
-    if (0 == state->state) {
+    else if (5 == state->state) {
         /* initiate a oneshot transaction */
         if (i2c_write_one_byte(&state->i2c_state, 1U << 7 | 1, 0x1e, 0x60)) return 1;
     }
-    else if (1 == state->state) {
+
+    else if (6 == state->state) {
         /* wait ten milliseconds */
         if (now - state->prev < 10) return 1;
     }
 
-    if (state->state < 2) {
+    if (state->state < 7) {
         /* completed any state other than the final one */
         state->state++;
         state->prev = now;
@@ -68,7 +56,9 @@ int lsm303agr_oneshot(int16_t values[3], struct lsm303agr_state * state, unsigne
 
         /* reached end of final state */
         state->i2c_state.state = 0;
-        state->state = 0;
+
+        /* note the next valid state is the beginning of a new oneshot transaction */
+        state->state = 5;
         return 0;
     }
 }

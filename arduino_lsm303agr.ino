@@ -13,8 +13,6 @@ void setup() {
 
     Serial.printf("hello\n");
 
-    while (lsm303agr_init(&lsm303agr_state, millis())) __WFI();
-
     prev = millis();
 }
 

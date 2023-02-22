@@ -12,22 +12,38 @@ int lsm303agr_oneshot(int16_t values[3], struct lsm303agr_state * state, unsigne
 
     if (1 == state->state) {
         /* init i2c bus */
-        if (i2c_init(&state->i2c_state, now)) return 1;
+        int ret = i2c_init(&state->i2c_state, now);
+        if (ret) {
+            if (-1 == ret) state->state = 0;
+            return 1;
+        }
     }
 
     else if (2 == state->state) {
         /* reboot */
-        if (i2c_write_one_byte(&state->i2c_state, 1U << 5, 0x1e, 0x60)) return 1;
+        int ret = i2c_write_one_byte(&state->i2c_state, 1U << 5, 0x1e, 0x60);
+        if (ret) {
+            if (-1 == ret) state->state = 0;
+            return 1;
+        }
     }
 
     else if (3 == state->state) {
         /* reset */
-        if (i2c_write_one_byte(&state->i2c_state, 1U << 6, 0x1e, 0x60)) return 1;
+        int ret = i2c_write_one_byte(&state->i2c_state, 1U << 6, 0x1e, 0x60);
+        if (ret) {
+            if (-1 == ret) state->state = 0;
+            return 1;
+        }
     }
 
     else if (4 == state->state) {
         /* enable bdu */
-        if (i2c_write_one_byte(&state->i2c_state, 1U << 4, 0x1e, 0x62)) return 1;
+        int ret = i2c_write_one_byte(&state->i2c_state, 1U << 4, 0x1e, 0x62);
+        if (ret) {
+            if (-1 == ret) state->state = 0;
+            return 1;
+        }
     }
 
     else if (5 == state->state) {
@@ -37,7 +53,11 @@ int lsm303agr_oneshot(int16_t values[3], struct lsm303agr_state * state, unsigne
 
     else if (6 == state->state) {
         /* initiate a oneshot transaction */
-        if (i2c_write_one_byte(&state->i2c_state, 1U << 7 | 1, 0x1e, 0x60)) return 1;
+        int ret = i2c_write_one_byte(&state->i2c_state, 1U << 7 | 1, 0x1e, 0x60);
+        if (ret) {
+            if (-1 == ret) state->state = 0;
+            return 1;
+        }
     }
 
     else if (7 == state->state) {
@@ -52,7 +72,11 @@ int lsm303agr_oneshot(int16_t values[3], struct lsm303agr_state * state, unsigne
         return 1;
     } else {
         /* final state */
-        if (i2c_read_from_register(&state->i2c_state, state->status_and_results, 7, 0x1e, 0x67 | 0x80)) return 1;
+        int ret = i2c_read_from_register(&state->i2c_state, state->status_and_results, 7, 0x1e, 0x67 | 0x80);
+        if (ret) {
+            if (-1 == ret) state->state = 0;
+            return 1;
+        }
 
         if (state->status_and_results[0] & 0x0F) {
             memcpy(values + 0, state->status_and_results + 1, 2);

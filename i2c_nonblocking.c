@@ -136,6 +136,23 @@ int i2c_init(struct i2c_state * state, unsigned long now) {
     }
 }
 
+int wait_for_mb_or_error(void) {
+    if (!SERCOM->I2CM.INTFLAG.bit.MB) {
+        if (SERCOM->I2CM.STATUS.bit.BUSERR) {
+            /* send stop command and wait for sync */
+            SERCOM->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_CMD(0x3);
+            while (SERCOM->I2CM.SYNCBUSY.bit.SYSOP);
+
+            /* parent should react to to this by resetting its state */
+            return -1;
+        }
+
+        /* otherwise we are still just waiting for ack */
+        else return 1;
+    }
+    else return 0;
+}
+
 int i2c_write_one_byte(struct i2c_state * state, uint8_t byte, uint8_t addr, uint8_t reg) {
     /* TODO: return -1 due to a number of possible error states */
     if (0 == state->state) {
@@ -147,13 +164,17 @@ int i2c_write_one_byte(struct i2c_state * state, uint8_t byte, uint8_t addr, uin
     }
 
     else if (1 == state->state) {
-        if (!SERCOM->I2CM.INTFLAG.bit.MB) return 1;
+        int ret = wait_for_mb_or_error();
+        if (ret) return ret;
+
         /* write register and wait for acknowledgment */
         SERCOM->I2CM.DATA.bit.DATA = reg;
     }
 
     else if (2 == state->state) {
-        if (!SERCOM->I2CM.INTFLAG.bit.MB) return 1;
+        int ret = wait_for_mb_or_error();
+        if (ret) return ret;
+
         /* write data byte and wait for acknowledgment */
         SERCOM->I2CM.DATA.bit.DATA = byte;
     }
@@ -164,7 +185,9 @@ int i2c_write_one_byte(struct i2c_state * state, uint8_t byte, uint8_t addr, uin
         return 1;
     } else {
         /* last state */
-        if (!SERCOM->I2CM.INTFLAG.bit.MB) return 1;
+        int ret = wait_for_mb_or_error();
+        if (ret) return ret;
+
         /* send stop command and wait for sync */
         SERCOM->I2CM.CTRLB.reg |= SERCOM_I2CM_CTRLB_CMD(0x3);
         while (SERCOM->I2CM.SYNCBUSY.bit.SYSOP);
@@ -186,13 +209,17 @@ int i2c_read_from_register(struct i2c_state * state, void * outv, size_t count, 
     }
 
     else if (1 == state->state) {
-        if (!SERCOM->I2CM.INTFLAG.bit.MB) return 1;
+        int ret = wait_for_mb_or_error();
+        if (ret) return ret;
+
         /* write register address and wait for ack */
         SERCOM->I2CM.DATA.bit.DATA = reg;
     }
 
     else if (2 == state->state) {
-        if (!SERCOM->I2CM.INTFLAG.bit.MB) return 1;
+        int ret = wait_for_mb_or_error();
+        if (ret) return ret;
+
         /* write address again with LSB set, which also sends a repeated-start condition*/
         SERCOM->I2CM.ADDR.bit.ADDR = addr << 1 | 1;
     }

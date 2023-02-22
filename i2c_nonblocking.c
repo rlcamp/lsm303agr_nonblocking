@@ -136,7 +136,7 @@ int i2c_init(struct i2c_state * state, unsigned long now) {
     }
 }
 
-int wait_for_mb_or_error(void) {
+static int wait_for_mb_or_error(void) {
     if (!SERCOM->I2CM.INTFLAG.bit.MB) {
         if (SERCOM->I2CM.STATUS.bit.BUSERR) {
             /* send stop command and wait for sync */

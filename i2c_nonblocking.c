@@ -48,8 +48,8 @@
 #define SDA_PORT_AND_PIN 0, 8
 #define SDA_PINMUX_FUNC 3
 
-#elif defined(ADAFRUIT_FEATHER_M4_EXPRESS)
-/* tested */
+#elif defined(ADAFRUIT_FEATHER_M4_EXPRESS) || defined(ADAFRUIT_ITSYBITSY_M4_EXPRESS)
+/* tested on feather, itsybitsy is supposedly same pins */
 #define SERCOM_I2C SERCOM2
 #define SERCOM_I2C_GCLK_ID_CORE SERCOM2_GCLK_ID_CORE
 #define SERCOM_I2C_IRQn SERCOM2_0_IRQn

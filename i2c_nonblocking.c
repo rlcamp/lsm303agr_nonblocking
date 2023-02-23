@@ -1,7 +1,14 @@
 /* campbell, 2023, isc license to the extent applicable */
 
 #include "i2c_nonblocking.h"
+
+#ifdef NON_ANCIENT_HEADER_PATHS
+/* newer cmsis-atmel from upstream */
+#include <samd51j19a.h>
+#else
+/* older cmsis-atmel from adafruit */
 #include <samd.h>
+#endif
 
 #ifdef SERCOM_I2C
 /* allow compiler invocation to override these macros */

@@ -82,7 +82,7 @@ int i2c_init(struct i2c_state * state, unsigned long now, unsigned long us_per_t
     
     if (state->state <= 18) {
         /* clock out nine bits of whatever leftover state the other end may have been sending */
-        if (now - state->prev < 20000 / us_per_tick) return 1;
+        if (now - state->prev < (20000 + us_per_tick / 2) / us_per_tick) return 1;
         pin_set(SCL_PORT_AND_PIN, !(state->state % 2)); /* lower pin in odd state, raise in even */
     }
 

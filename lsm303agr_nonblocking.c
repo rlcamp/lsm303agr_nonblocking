@@ -44,7 +44,7 @@ int lsm303agr_oneshot(struct lsm303agr_result * result, struct lsm303agr_state *
 
     else if (8 == state->state) {
         /* wait ten milliseconds from completion of previous state */
-        if (now - state->prev < 10000 / us_per_tick) return 1;
+        if (now - state->prev < (10000 + us_per_tick / 2) / us_per_tick) return 1;
     }
 
     else if (9 == state->state) {
@@ -77,7 +77,7 @@ int lsm303agr_oneshot(struct lsm303agr_result * result, struct lsm303agr_state *
 
     else if (11 == state->state) {
         /* ensure ten milliseconds have elapsed since oneshot-init completed */
-        if (now - state->prev < 10000 / us_per_tick) return 1;
+        if (now - state->prev < (10000 + us_per_tick / 2) / us_per_tick) return 1;
     }
 
     if (state->state < 12) {

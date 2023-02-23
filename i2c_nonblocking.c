@@ -71,7 +71,7 @@ static void pin_set(const unsigned port, const unsigned pin, const unsigned valu
     else PORT->Group[port].OUTCLR.reg = 1U << pin;
 }
 
-int i2c_init(struct i2c_state * state, unsigned long now) {
+int i2c_init(struct i2c_state * state, unsigned long now, unsigned long us_per_tick) {
     if (0 == state->state) {
         /* disable the sercom prior to bitbanging */
         SERCOM_I2C->I2CM.CTRLA.bit.ENABLE = 0;
@@ -82,7 +82,7 @@ int i2c_init(struct i2c_state * state, unsigned long now) {
     
     if (state->state <= 18) {
         /* clock out nine bits of whatever leftover state the other end may have been sending */
-        if (now - state->prev < 20) return 1;
+        if (now - state->prev < 20000 / us_per_tick) return 1;
         pin_set(SCL_PORT_AND_PIN, !(state->state % 2)); /* lower pin in odd state, raise in even */
     }
 

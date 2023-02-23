@@ -28,7 +28,7 @@ void loop() {
 
     if (0 == state) {
         struct lsm303agr_result result;
-        if (lsm303agr_oneshot(&result, &lsm303agr_state, now)) return;
+        if (lsm303agr_oneshot(&result, &lsm303agr_state, now, 1000)) return;
 
         if (result.mag[0] || result.mag[1] || result.mag[2]) {
             /* do some stupid, fragile auto calibration stuff */

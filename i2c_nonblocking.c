@@ -10,6 +10,8 @@
 #include <samd.h>
 #endif
 
+/* TODO: add MCLK config to these macros */
+
 #ifdef SERCOM_I2C
 /* allow compiler invocation to override these macros */
 #elif defined(ADAFRUIT_FEATHER_M0)
@@ -107,7 +109,7 @@ int i2c_init(struct i2c_state * state, unsigned long now, unsigned long us_per_t
         GCLK->PCHCTRL[SERCOM_I2C_GCLK_ID_CORE].bit.CHEN = 0;
         while (GCLK->PCHCTRL[SERCOM_I2C_GCLK_ID_CORE].bit.CHEN);
 
-        GCLK->PCHCTRL[SERCOM_I2C_GCLK_ID_CORE].reg = GCLK_PCHCTRL_GEN_GCLK1_Val | (1 << GCLK_PCHCTRL_CHEN_Pos);
+        GCLK->PCHCTRL[SERCOM_I2C_GCLK_ID_CORE].reg = (F_CPU == 48000000 ? GCLK_PCHCTRL_GEN_GCLK0 : GCLK_PCHCTRL_GEN_GCLK1) | GCLK_PCHCTRL_CHEN;
         while (!GCLK->PCHCTRL[SERCOM_I2C_GCLK_ID_CORE].bit.CHEN);
 #else
         /* set up clock */

@@ -16,8 +16,6 @@
 /* tested */
 #define SERCOM_I2C SERCOM3
 #define SERCOM_I2C_GCLK_ID_CORE SERCOM3_GCLK_ID_CORE
-#define SERCOM_I2C_IRQn SERCOM3_IRQn
-#define SERCOM_I2C_HANDLER SERCOM3_Handler
 #define PM_APBCMASK_SERCOM_I2C PM_APBCMASK_SERCOM3
 #define SCL_PORT_AND_PIN 0, 23
 #define SCL_PINMUX_FUNC 2
@@ -28,8 +26,6 @@
 /* tested */
 #define SERCOM_I2C SERCOM1
 #define SERCOM_I2C_GCLK_ID_CORE SERCOM1_GCLK_ID_CORE
-#define SERCOM_I2C_IRQn SERCOM1_IRQn
-#define SERCOM_I2C_HANDLER SERCOM1_Handler
 #define PM_APBCMASK_SERCOM_I2C PM_APBCMASK_SERCOM1
 #define SCL_PORT_AND_PIN 0, 17
 #define SCL_PINMUX_FUNC 2
@@ -40,8 +36,6 @@
 /* TODO: NOT tested. SHOULD work with trinket silkscreen pins 0 and 2 for sda and scl */
 #define SERCOM_I2C SERCOM2
 #define SERCOM_I2C_GCLK_ID_CORE SERCOM2_GCLK_ID_CORE
-#define SERCOM_I2C_IRQn SERCOM2_IRQn
-#define SERCOM_I2C_HANDLER SERCOM2_Handler
 #define PM_APBCMASK_SERCOM_I2C PM_APBCMASK_SERCOM2
 #define SCL_PORT_AND_PIN 0, 9
 #define SCL_PINMUX_FUNC 3
@@ -52,8 +46,6 @@
 /* tested */
 #define SERCOM_I2C SERCOM2
 #define SERCOM_I2C_GCLK_ID_CORE SERCOM2_GCLK_ID_CORE
-#define SERCOM_I2C_IRQn SERCOM2_0_IRQn
-#define SERCOM_I2C_HANDLER SERCOM2_0_Handler
 #define SERCOM_I2C_APBMASK_DEST APBBMASK
 #define SERCOM_I2C_APBMASK_VAL MCLK_APBBMASK_SERCOM2
 #define SCL_PORT_AND_PIN 0, 13
@@ -102,11 +94,6 @@ int i2c_init(struct i2c_state * state, unsigned long now, unsigned long us_per_t
         /* set up pinmux using board-specific macros */
         pinmux(SDA_PORT_AND_PIN, SDA_PINMUX_FUNC);
         pinmux(SCL_PORT_AND_PIN, SCL_PINMUX_FUNC);
-
-        /* set up interrupt */
-        NVIC_ClearPendingIRQ(SERCOM_I2C_IRQn);
-        NVIC_SetPriority(SERCOM_I2C_IRQn, (1 << __NVIC_PRIO_BITS) - 1);
-        NVIC_EnableIRQ(SERCOM_I2C_IRQn);
 
 #ifdef __SAMD51__
         MCLK->SERCOM_I2C_APBMASK_DEST.reg |= SERCOM_I2C_APBMASK_VAL;

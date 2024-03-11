@@ -3,11 +3,11 @@
 #include "i2c_nonblocking.h"
 
 #if __has_include(<samd51.h>)
-/* newer cmsis-atmel from upstream */
+/* as invoked by Makefile, regardless of cmsis-atmel version */
 #include <samd51.h>
 #else
-/* older cmsis-atmel from adafruit */
-#include <samd.h>
+/* as invoked by a certain ide, in case people want to use it to test modules in isolation */
+#include <samd51/include/samd51.h>
 #endif
 
 #ifdef SERCOM_I2C

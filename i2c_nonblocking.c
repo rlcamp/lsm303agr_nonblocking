@@ -116,7 +116,14 @@ int i2c_init(struct i2c_state * state, unsigned long now, unsigned long us_per_t
         while (SERCOM_I2C->I2CM.CTRLA.bit.SWRST || SERCOM_I2C->I2CM.SYNCBUSY.bit.SWRST);
 
         /* TODO: figure out what else is needed for i2c in standby on samd21, works fine on samd51 */
-        SERCOM_I2C->I2CM.CTRLA.reg = SERCOM_I2CM_CTRLA_MODE(0x5u) | SERCOM_I2CM_CTRLA_RUNSTDBY | SERCOM_I2CM_CTRLA_LOWTOUTEN | SERCOM_I2CM_CTRLA_SEXTTOEN | SERCOM_I2CM_CTRLA_MEXTTOEN | SERCOM_I2CM_CTRLA_INACTOUT(2);
+        SERCOM_I2C->I2CM.CTRLA.reg = (SERCOM_I2CM_CTRLA_Type) { .bit = {
+            .MODE = 0x5u,
+            .RUNSTDBY = 1,
+            .LOWTOUTEN = 1,
+            .SEXTTOEN = 1,
+            .MEXTTOEN = 1,
+            .INACTOUT = 2
+        }}.reg;
 
         /* assume system/peripheral clock is 48 MHz */
         const unsigned long sysclock = 48000000UL, baudrate = 100000UL;

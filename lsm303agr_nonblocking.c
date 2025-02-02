@@ -23,17 +23,17 @@ int lsm303agr_oneshot(struct lsm303agr_result * result, struct lsm303agr_state *
 
     else if (state->state < 8) {
         /* table of i2c register writes versus state index */
-        static const struct config_write { uint8_t val, reg, address; } writes[] = {
-          { .val = 0b00100000, .reg = 0x1e, .address = 0x60 }, /* reboot magnetometer */
-          { .val = 0b01000000, .reg = 0x1e, .address = 0x60 }, /* reset magnetometer */
-          { .val = 0b00010000, .reg = 0x1e, .address = 0x62 }, /* configure bdu for magnetometer */
-          { .val = 0b10000000, .reg = 0x19, .address = 0x24 }, /* reboot accelerometer */
-          { .val = 0b00101111, .reg = 0x19, .address = 0x20 }, /* 10 Hz, low power */
-          { .val = 0b10000000, .reg = 0x19, .address = 0x23 }, /* configure bdu for accelerometer */
+        static const struct config_write { uint8_t val, addr, reg; } writes[] = {
+          { .val = 0b00100000, .addr = 0x1e, .reg = 0x60 }, /* reboot magnetometer */
+          { .val = 0b01000000, .addr = 0x1e, .reg = 0x60 }, /* reset magnetometer */
+          { .val = 0b00010000, .addr = 0x1e, .reg = 0x62 }, /* configure bdu for magnetometer */
+          { .val = 0b10000000, .addr = 0x19, .reg = 0x24 }, /* reboot accelerometer */
+          { .val = 0b00101111, .addr = 0x19, .reg = 0x20 }, /* 10 Hz, low power */
+          { .val = 0b10000000, .addr = 0x19, .reg = 0x23 }, /* configure bdu for accelerometer */
         };
         const struct config_write * write = writes + state->state - 2;
 
-        int ret = i2c_write_one_byte(&state->i2c_state, write->val, write->reg, write->address);
+        int ret = i2c_write_one_byte(&state->i2c_state, write->val, write->addr, write->reg);
         if (ret) {
             if (-1 == ret) state->state = 0;
             return 1;
